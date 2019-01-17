@@ -1,0 +1,41 @@
+by 陶然
+一、 安装python3.6   https://www.cnblogs.com/kimyeee/p/7250560.html
+1:wget https://www.python.org/ftp/python/3.6.4/Python-3.6.4.tgz
+  mkdir -p /usr/local/python3
+2:tar -zxvf Python-3.6.4.tgz
+3:cd Python-3.6.4
+4:./configure --prefix=/usr/local/python3
+5:make
+6:make install
+7：ln -s /usr/local/python3/bin/python3 /usr/bin/python3
+
+8：/usr/local/python3/bin加入PATH(即安装目录)
+vim ~/.bash_profile
+
+# vim ~/.bash_profile
+# .bash_profile
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+# User specific environment and startup programs
+PATH=$PATH:$HOME/bin:/usr/local/python3/bin
+export PATH
+
+
+source ~/.bash_profile
+
+9.pip 设置镜像源
+
+linux下，修改 ~/.pip/pip.conf (没有就创建一个)， 修改 index-url至tuna，内容如下：
+ [global]
+ index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+ 
+二、安装python三方库
+1、pytroch
+pip3 install http://download.pytorch.org/whl/cpu/torch-0.3.1-cp36-cp36m-linux_x86_64.whl 
+pip3 install torchvision
+
+
+//linux之间下载文件
+scp -r root@192.168.63.230:cls_demo  ./  
