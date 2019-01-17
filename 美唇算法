@@ -1,0 +1,24 @@
+https://github.com/TheMathWizard/Face-Makeup-by-Example
+
+dst原图  src目标效果图
+1、将两张图片resize至相同宽度（500），比较两张图片的高度，将高度低的那张图片下部用黑色补齐。
+2、将图片转换成灰度图，使用dlib 检测出人脸区域，根据人脸区域再检测出68个关键点。
+3、根据人脸区域的上下左右四个点位，得出人脸区域的最左点x、最上点y、宽度w、高度h，使用这四个值计算Delaunay三角剖分区域的范围（源码的计算没有看懂，源码使用x-cx，y-cy，w+x+cx，h+y+cx这四个点）。
+4、使用皮肤检测算法在68个点基础上不全额头的10个点。
+5、根据78个点和三角区域进行Delaunay三角剖分，获得两张图的剖分结果
+6、遍历dst的三角形矩阵，一次遍历6个坐标，对应三角形3个点。得到这三个坐标点后遍历78个特征点，寻找特征点中和坐标点对应的3个点，得到他们的对应编码，并得出src对应三个点pst1，同时得到dst图片中对应的三个点pst2
+6、以src的shape创建一个全0矩阵，将pst2三个点围成的区域使用（255，255，255） fillpoly，获得mask
+7、将src全图以以pst1 pst2 进行仿射变换获得变换后的src
+8、将mask与变换后的src按位与操作，得到变换后对应区域的一块图像，将得到的图像与黑底图片按位或，这样遍历后就可以得到整个关键区域的仿射变换结果。
+9、现在拥有两张处理后的图片，1、原图subject（如果原图比效果图高度低，底部黑色补齐）2、只剩脸部的效果图warped_target，效果图按照原图的关键点进行仿射变换。
+10、使用dilb 检测原图的关键点，获取48~62的点位 ，计算凸包，用白色绘制轮廓。获取60~67的点位，计算凸包，用黑色绘制轮廓。最终得到一张黑底的白色嘴唇图片lipmap。
+11、将白色嘴唇与原图进行合成，获得嘴唇区域为白色的图片 overlay，np.where(lip_map != [0, 0, 0], lip_map, overlay)
+12、将warped_target和 subject从rgb转换成lab,l_E、l_I分别是两张图片的l通道值
+13、遍历lip_map的每一个像素点,如果当这个点的b g r中的g不为0时，知道这个像素点属于嘴唇区域，取出l_E、l_I中对应点，计算和与平方和     l_E_sum,l_E_sumsq,l_I_sum,l_I_sumsq,将嘴唇所有像素点坐标保存至lip_pts
+14、计算出l_E_mean,l_I_mean  sum/len(lip_pts)
+15、计算出标准差 l_E_std 、l_I_std   sqrt((l_sumsq / len(lip_pts)) - l_mean ** 2)
+16、根据目标亮度映射，拟合源的主图  l_E = (l_I_std / l_E_std * (l_E - l_E_mean)) + l_I_mean 
+17、获取subject 、warped_target的lab图 M,warped_target_LAB
+18、拷贝嘴唇区域点，并打乱获取  sample=lip_pts.copy() random.shuffle(sample)
+19、遍历嘴唇区域坐标点，迭代若干次，每次迭代，取sample中的坐标点，通过一个算法算出一个最大值，保存最大值的坐标点，将此坐标warped_target_LAB的值赋给M。
+20、新建一个subject的lab图output，将M中嘴唇区域内的lab值中的l赋给output
